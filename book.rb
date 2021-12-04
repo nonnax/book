@@ -10,6 +10,7 @@ require_relative 'lib/editor'
 
 YTD = Time.now.strftime('%Y')
 
+BOOK_ROOT = File.expand_path("~/.book")
 BOOK_DIR = File.expand_path("~/.book/#{YTD}")
 FileUtils.mkdir_p BOOK_DIR unless Dir.exist?(BOOK_DIR)
 
@@ -18,20 +19,22 @@ BOOK_DATE = '%Y-%m-%d'
 BOOK_TIME = '%H:%M'
 ERR_MSG = 'Wo0ps! post format error. Try again :-)'
 
+@tagdir='general'
+
 def get(text)
   IO.editor text
 end
 
 def book_sections(f)
-  _, *docs = File.open(f) do |f|
+  docs = File.open(f) do |f|
     f.flock(File::LOCK_EX)
     f.read.split(/(?=-{3}\ntime: )/)
-  end
-  docs
+  end.map{|e| e.strip.match(/^$/) ? nil : e}.compact
 end
 
 def book_file
-  [BOOK_DIR, "#{default_date}.md"].join('/')
+  return '_no_file_' unless @book_dir
+  [@book_dir, "#{default_date}.md"].join('/')
 end
 
 def default_date
@@ -60,8 +63,11 @@ rescue StandardError => e
 end
 
 def save_page(text)
-  f = [BOOK_DIR, "#{default_date}.md"].join('/')
-  FileUtils.cp f, "#{f}.bak"
+  @book_dir=[BOOK_ROOT, @tagdir, YTD].join('/')
+  FileUtils.mkdir_p @book_dir unless Dir.exist?(@book_dir)
+
+  f = [@book_dir, "#{default_date}.md"].join('/')
+  FileUtils.cp f, "#{f}.bak" if File.exists?(f)
   File.open(f, 'a+') do |f|
     f.flock(File::LOCK_EX)
     f.puts(text)
@@ -72,6 +78,7 @@ end
 
 def to_book(h)
   time, tags, post = h.values_at(*%i[time tags post])
+  @tagdir=tags.split(/\s/).first
   <<~DOC
     ---
     time: #{time}
@@ -83,7 +90,8 @@ end
 
 def list(q)
   # query with <starts with>
-  books = Dir[[BOOK_DIR, "#{q}*.md"].join('/')]
+  [BOOK_ROOT, "**/#{q}*/**/*.md"].join('/')
+  books = Dir[[BOOK_ROOT, "**/#{q}*/**/*.md"].join('/')]
   books.each_with_index do |book, i|
     puts ['Book', i, File.basename(book)].join(':')
     book_sections(book).each do |page|
@@ -106,9 +114,9 @@ def run
     send(m, t)
   end
 
-  puts "posted to: #{book_file}"
-rescue StandardError
-  puts ERR_MSG
+  puts "posted to: #{@book_dir}"
+rescue StandardError => e
+  puts [ERR_MSG, e]
   exit
 end
 
