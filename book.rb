@@ -29,11 +29,11 @@ def book_sections(f)
   docs = File.open(f) do |f|
     f.flock(File::LOCK_EX)
     f.read.split(/(?=-{3}\ntime: )/)
-  end.map{|e| e.strip.match(/^$/) ? nil : e}.compact
+  end
 end
 
 def book_file
-  return '_no_file_' unless @book_dir
+  return '__no_file__' unless @book_dir
   [@book_dir, "#{default_date}.md"].join('/')
 end
 

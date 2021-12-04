@@ -29,7 +29,8 @@ def book_sections(f)
   docs = File.open(f) do |f|
     f.flock(File::LOCK_EX)
     f.read.split(/(?=-{3}\ntime: )/)
-  end.map{|e| e.strip.match(/^$/) ? nil : e}.compact
+  end
+  docs
 end
 
 def book_file
