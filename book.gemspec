@@ -1,6 +1,7 @@
 files=%w[README.md
 book.rb
 bin/book
+lib/editor.rb
 book.gemspec
 ]
 Gem::Specification.new do |s|

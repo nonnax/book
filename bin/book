@@ -5,9 +5,8 @@
 # query with: book <begins-with query of a date>
 #   i.e. book 2021; shows contents of all books of that year
 #
-require 'rubytools'
-require 'editor'
 require 'fileutils'
+require_relative '../lib/editor'
 
 YTD=Time.now.strftime('%Y')
 
