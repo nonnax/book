@@ -3,23 +3,30 @@
 
 # Id$ nonnax 2021-12-04 22:59:31 +0800
 require 'fileutils'
+require 'base64'
 
 f = ARGV.first
 
 unless f
-	puts "#{File.basename(__FILE__)}: <filename>"
-	exit
+  puts "#{File.basename(__FILE__)}: <filename>"
+  exit
 end
 
-book=[]
-tags='general'
-file_date=Time.now
+def lock(post)
+  Base64.encode64(post)
+end
+
+book = []
+tags = 'general'
+file_date = Time.now
 File.read(f).split(/(?=^\d{2}-(?:[^>])+>)+/).each_with_index do |note, i|
   date, post = note.split(/\s*>\s*/, 2)
   # if it's non-standard format just copy it
-  post = note unless post 
+  post ||= note
   tags = File.dirname(f)
   tags = 'general' if tags[/^\./]
+  post.strip!
+  post=lock(post) if tags[/safe/]
   file_date = date = File.open(f).mtime if i.zero?
   doc = <<~__
     ---
@@ -27,20 +34,17 @@ File.read(f).split(/(?=^\d{2}-(?:[^>])+>)+/).each_with_index do |note, i|
     tags: #{tags}
     ---
     #{post}
-
   __
-  book<<doc
+  book << doc
 end
 
-folder=tags
-subfolder=file_date.year
-p dir="book/#{folder}/#{subfolder}"
-FileUtils.mkdir_p(dir) unless Dir.exists?(dir)
+folder = tags
+subfolder = file_date.year
+p dir = "book/#{folder}/#{subfolder}"
+FileUtils.mkdir_p(dir) unless Dir.exist?(dir)
 
-new_f=[File.basename(f, '.*'), '.md'].join
-p path=[dir, new_f].join('/')
-# 
+new_f = [File.basename(f, '.*'), '.md'].join
+p path = [dir, new_f].join('/')
 File.open(path, 'w') do |f|
   f.puts book.join("\n")
 end
-

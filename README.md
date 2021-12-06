@@ -3,8 +3,17 @@
 Usage: 
 $ book 
 
-Location:
-journal entries are saved into ~/.book
+Options: 
+-l, --list : List all with
+-d, ?, --dump : Dump entire content
 
-Browse:
-$ book 'begins-with-query-of-date', i.e. book 2021
+Viewing:
+
+book 'begins-with' keyword, or multi-keywords
+
+$ book ruby
+  or
+$ book bash image
+  
+Location:
+posts directory at ~/.book

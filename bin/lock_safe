@@ -1,0 +1,52 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Id$ nonnax 2021-12-05 00:18:07 +0800
+require 'base64'
+require 'fileutils'
+
+PAGE_SPLIT_RE = /-{3}\n/.freeze
+PAGE_DELIMETER_RE = /(?=-{3}\ntime:)/.freeze
+
+def book_sections(f)
+  File.open(f) do |f|
+    f.flock(File::LOCK_EX)
+    f.read.split(PAGE_DELIMETER_RE)
+  end
+end
+
+def pack(header, post)
+  post = Base64.encode64(post)
+  <<~__
+    ---
+    #{header.strip}
+    ---
+    #{post.strip}
+  __
+end
+
+f = ARGV.first
+
+unless f
+  puts "#{File.basename(__FILE__, '.*')}: <filename>" 
+  exit
+end
+
+book_sections(f).each do |page|
+  _, header, post = page.split(PAGE_SPLIT_RE, 3)
+  if [header, post].any? { |e| e.to_s.size.zero? }
+    p 'invalid book page'
+    break 
+  end
+  # simple test if already locked
+  break unless post.scan(/\w+/).first.to_s.size < 20
+
+  if header[/safe/]
+    p 'locking...'
+    f_basename = File.basename(f, '.*')
+    FileUtils.cp(f, "#{f_basename}.bak")
+    File.write(f, pack(header, post))
+  end
+rescue StandardError => e
+  p e
+end

@@ -2,18 +2,18 @@
 # frozen_string_literal: true
 
 # Id$ nonnax 2021-12-03 20:08:27 +0800
-# query with: 
-# $ book <starts-with> 
+# query with:
+# $ book <starts-with>
 # ex. book ruby
 #
 require 'fileutils'
 require 'base64'
-require_relative '../lib/editor'
+require_relative 'lib/editor'
 
 YTD = Time.now.strftime('%Y')
 
-BOOK_ROOT = File.expand_path("~/.book")
-FileUtils.mkdir_p   BOOK_ROOT unless Dir.exist?(BOOK_ROOT)
+BOOK_ROOT = File.expand_path('~/.book')
+FileUtils.mkdir_p BOOK_ROOT unless Dir.exist?(BOOK_ROOT)
 
 BOOK_DATETIME = '%Y-%m-%d %H:%M'
 BOOK_DATE = '%Y-%m-%d'
@@ -21,7 +21,7 @@ BOOK_TIME = '%H:%M'
 ERR_MSG = 'Wo0ps! post format error. Try again :-)'
 NO_FILE_FLAG = '__no_file__'
 
-@tagdir='general'
+@tagdir = 'general'
 
 def get(text)
   IO.editor text
@@ -30,35 +30,34 @@ end
 def book_sections(f)
   docs = File.open(f) do |f|
     f.flock(File::LOCK_EX)
-    f.read.split(/(?=-{3}\ntime: )/)
+    f.read.split(/(?=-{3}\ntime:\s)/)
   end
-end
-
-def book_file
-  return NO_FILE_FLAG unless @book_file
-  @book_file
 end
 
 def create_book_path
   # yield and delete a @book_file name
-  # retain @book_dir for later notification 
+  # retain @book_dir for later notification
   raise [__method__, ERR_MSG].join(':') unless @tagdir
-  @book_dir=[BOOK_ROOT, @tagdir, YTD].join('/')
+
+  @book_dir = [BOOK_ROOT, @tagdir, YTD].join('/')
   FileUtils.mkdir_p @book_dir unless Dir.exist?(@book_dir)
 
   @book_file = [@book_dir, "#{default_date}.md"].join('/')
-  FileUtils.cp @book_file, "#{@book_file}.bak" if File.exists?(@book_file)
+  FileUtils.cp @book_file, "#{@book_file}.bak" if File.exist?(@book_file)
   yield @book_file
-  @book_file=nil
+  @book_file = nil
 end
 
-def default_date
-  @default_date ||= Time.now.strftime(BOOK_DATE)
+def book_file
+  # act as flag for other methods
+  return NO_FILE_FLAG unless @book_file
+
+  @book_file
 end
 
 def default_time_header
-  # a new book begins with a datetime header
-  # subsequent posts use time headers
+  # a new book use BOOK_DATETIME header
+  # subsequent posts use BOOK_TIME header
   File.exist?(book_file) ? Time.now.strftime(BOOK_TIME) : Time.now.strftime(BOOK_DATETIME)
 end
 
@@ -71,7 +70,7 @@ def book_hash_check(text)
   h.merge!(post: post)
   h.transform_keys!(&:to_sym)
 
-  raise RuntimeError if [:time, :post].any?{|e| h[e].to_s.size.zero? }
+  raise RuntimeError if %i[time post].any? { |e| h[e].to_s.size.zero? }
 
   h
 end
@@ -88,37 +87,41 @@ def book_save(text)
 end
 
 def lock(post)
-  #basic obfuscation
+  # obfuscation
   Base64.encode64(post)
 end
 
 def unlock(post)
-  #basic obfuscation
+  # unobfuscation
   Base64.decode64(post)
+end
+
+def default_date
+  @default_date ||= Time.now.strftime(BOOK_DATE)
 end
 
 def to_book(h)
   time, tags, post = h.values_at(*%i[time tags post])
-  @tagdir=tags.split(/\s/).first
-  post=lock(post) if /safe/.match(tags) 
+  @tagdir = tags.split(/\s/).first
+  post = lock(post) if /safe/.match(tags)
   <<~___
     ---
     time: #{time}
     tags: #{tags.strip}
     ---
-    #{post.strip}
+    #{post.to_s.strip}
   ___
 end
 
 def view(page)
-  header, post = page.split(/-{3,}/,3).map{|s| s.strip.empty? ? nil : s}.compact
-  post=unlock(post) if /safe/.match(header) 
+  _, header, post = page.split(/-{3,}\n/, 3)
+  post = unlock(post) if /safe/.match(header)
   <<~___
     ---
     #{header.strip}
     ---
-    #{post.strip}
-    #{'-'*72}
+    #{post.to_s.strip}
+    #{'-' * 72}
   ___
 end
 
@@ -153,8 +156,18 @@ rescue StandardError => e
   exit
 end
 
-unless ARGV.empty?
-  ARGV.each{|q| dump(q)}
-else
-  run
+# --------------
+
+case 
+  when ARGV.empty?
+    run
+  when ARGV.detect{ |e| /\-l/.match(e) }
+    puts Dir[[BOOK_ROOT, "*/"].join('/')]
+          .map{ |e| File.basename(e) }
+          .sort
+          .uniq
+          .join("\n")
+    
+  when ARGV.detect{ |e| /\-d/.match(e) }
+    ARGV.each { |q| dump(q) }
 end
