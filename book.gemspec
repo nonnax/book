@@ -1,6 +1,7 @@
 files=%w[README.md
 book.rb
 bin/book
+bin/jnotes_migrate.rb
 lib/editor.rb
 book.gemspec
 ]

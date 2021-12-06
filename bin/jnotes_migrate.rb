@@ -11,8 +11,10 @@ tags='general'
 file_date=Time.now
 File.read(f).split(/(?=^\d{2}-(?:[^>])+>)+/).each_with_index do |note, i|
   date, post = note.split(/\s*>\s*/, 2)
+  # if it's non-standard format just copy it
+  post = note unless post 
   tags = File.dirname(f)
-  tags = 'general' if tags.match(/^\./)
+  tags = 'general' if tags[/^\./]
   file_date = date = File.open(f).mtime if i.zero?
   doc = <<~__
     ---
