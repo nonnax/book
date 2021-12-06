@@ -1,7 +1,7 @@
 files=%w[README.md
 book.rb
 bin/book
-bin/jnotes_migrate.rb
+bin/jnotes_migrate
 lib/editor.rb
 book.gemspec
 ]
@@ -14,6 +14,7 @@ Gem::Specification.new do |s|
   s.email = "ironald@gmail.com"
   s.files = files
   s.executables << 'book'
+  s.executables << 'jnotes_migrate'
   s.homepage = "https://github.com/nonnax/book.git"
   s.license = "GPL-3.0"
 end

@@ -6,6 +6,11 @@ require 'fileutils'
 
 f = ARGV.first
 
+unless f
+	puts "#{File.basename(__FILE__)}: <filename>"
+	exit
+end
+
 book=[]
 tags='general'
 file_date=Time.now
