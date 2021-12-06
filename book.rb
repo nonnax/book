@@ -7,7 +7,8 @@
 # ex. book ruby
 #
 require 'fileutils'
-require_relative 'lib/editor'
+require 'base64'
+require_relative '../lib/editor'
 
 YTD = Time.now.strftime('%Y')
 
@@ -70,7 +71,7 @@ def book_hash_check(text)
   h.merge!(post: post)
   h.transform_keys!(&:to_sym)
 
-  raise RuntimeError if [:time, :post].any?{|e| h[e].nil? || h[e].strip.empty? }
+  raise RuntimeError if [:time, :post].any?{|e| h[e].to_s.size.zero? }
 
   h
 end
@@ -86,16 +87,39 @@ def book_save(text)
   text
 end
 
+def lock(post)
+  #basic obfuscation
+  Base64.encode64(post)
+end
+
+def unlock(post)
+  #basic obfuscation
+  Base64.decode64(post)
+end
+
 def to_book(h)
   time, tags, post = h.values_at(*%i[time tags post])
   @tagdir=tags.split(/\s/).first
-  <<~DOC
+  post=lock(post) if /safe/.match(tags) 
+  <<~___
     ---
     time: #{time}
-    tags: #{tags}
+    tags: #{tags.strip}
     ---
-    #{post}
-  DOC
+    #{post.strip}
+  ___
+end
+
+def view(page)
+  header, post = page.split(/-{3,}/,3).map{|s| s.strip.empty? ? nil : s}.compact
+  post=unlock(post) if /safe/.match(header) 
+  <<~___
+    ---
+    #{header.strip}
+    ---
+    #{post.strip}
+    #{'-'*72}
+  ___
 end
 
 def dump(q)
@@ -104,7 +128,7 @@ def dump(q)
   books.each_with_index do |book, i|
     puts ['Book', i, File.basename(book)].join(':')
     book_sections(book).each do |page|
-      puts page
+      puts view(page)
       puts
     end
   end
