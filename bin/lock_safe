@@ -8,6 +8,12 @@ require 'fileutils'
 PAGE_SPLIT_RE = /-{3}\n/.freeze
 PAGE_DELIMETER_RE = /(?=-{3}\ntime:)/.freeze
 
+class String
+  def base64?
+    Base64.encode64(Base64.decode64(self)) == self
+  end
+end
+
 def book_sections(f)
   File.open(f) do |f|
     f.flock(File::LOCK_EX)
@@ -16,12 +22,12 @@ def book_sections(f)
 end
 
 def pack(header, post)
-  post = Base64.encode64(post)
+  post = Base64.encode64(post.strip)
   <<~__
     ---
     #{header.strip}
     ---
-    #{post.strip}
+    #{post}
   __
 end
 
@@ -39,7 +45,8 @@ book_sections(f).each do |page|
     break 
   end
   # simple test if already locked
-  break unless post.scan(/\w+/).first.to_s.size < 20
+  break unless post && post.base64?
+  # break unless post[/\w+/].to_s.size < 24 && (post.size % 4).zero?
 
   if header[/safe/]
     p 'locking...'
