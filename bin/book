@@ -10,15 +10,18 @@ require_relative '../lib/booker'
 require 'optparse'
 @options = {}
 
+
 OptionParser.new do |opts|
   opts.on('-l', '--list', 'List books')
   opts.on('-a', '--all', 'Show all books to stdout')
   opts.on('-v[INPUT]', '--view=[INPUT]', 'View contents of book(s)', Array)
 end.parse!(into: @options)
 
+args=ARGV
+
 case 
   when @options.empty?
-    run
+    run args
   when @options[:all]
     dump('?')
   when @options[:list]

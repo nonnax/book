@@ -4,6 +4,8 @@ bin/book
 bin/jnotes_migrate
 bin/lock_safe
 lib/editor.rb
+lib/booker.rb
+lib/string64.rb
 book.gemspec
 ]
 Gem::Specification.new do |s|

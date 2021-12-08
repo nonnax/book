@@ -49,11 +49,12 @@ def dump(q)
   end
 end
 
-def run
+def run(args)
+  tags = args.empty? ? "general" : args.join(' ')
   template = <<~DOC
     ---
     time: #{default_time_header}
-    tags: ruby ffmpeg
+    tags: #{tags}
     ---
   DOC
 

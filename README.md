@@ -4,16 +4,12 @@ Usage:
 $ book 
 
 Options: 
--l, --list : List all with
--d, ?, --dump : Dump entire content
+-h, --help : List all options
 
-Viewing:
+Posting:
+$ book 
+or
+$ book 'tag'
 
-book 'begins-with' keyword, or multi-keywords
-
-$ book ruby
-  or
-$ book bash image
-  
 Location:
 posts directory at ~/.book
