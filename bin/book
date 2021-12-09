@@ -26,7 +26,7 @@ args=ARGV
 case 
   when @options.empty?
     run args
-  when @options[:all]
+  when @options[:dump]
     dump('?')
   when @options[:list]
     puts Dir[[BOOK_ROOT, '*/'].join('/')]
