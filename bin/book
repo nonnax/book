@@ -10,12 +10,16 @@ require_relative '../lib/booker'
 require 'optparse'
 @options = {}
 
-
-OptionParser.new do |opts|
-  opts.on('-l', '--list', 'List books')
-  opts.on('-a', '--all', 'Show all books to stdout')
-  opts.on('-v[INPUT]', '--view=[INPUT]', 'View contents of book(s)', Array)
-end.parse!(into: @options)
+begin
+  OptionParser.new do |opts|
+    opts.on('-l', '--list', 'List books')
+    opts.on('-d', '--dump', 'Dump contents to stdout')
+    opts.on('-v[INPUT]', '--view=[INPUT]', 'View contents of book(s)', Array)
+  end.parse!(into: @options)
+rescue => e
+  puts e.to_s
+  exit
+end
 
 args=ARGV
 
@@ -28,10 +32,11 @@ case
     puts Dir[[BOOK_ROOT, '*/'].join('/')]
       .map { |e| File.basename(e) }
       .sort
-      .uniq
       .join("\n")
   when @options[:view]
     @options[:view].each do |q|
       dump(q)
     end
+  else
+    puts 'invalid input'
 end

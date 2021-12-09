@@ -1,0 +1,69 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Id$ nonnax 2021-12-05 00:18:07 +0800
+require 'base64'
+require 'fileutils'
+require 'chronic'
+
+
+PAGE_SPLIT_RE = /-{3}\n/.freeze
+PAGE_DELIMETER_RE = /(?=-{3}\ntime:)/.freeze
+
+class String
+  def base64?
+    Base64.encode64(Base64.decode64(self)) == self
+  end
+end
+
+def book_sections(f)
+  File.open(f) do |f|
+    f.flock(File::LOCK_EX)
+    f.read.split(PAGE_DELIMETER_RE)
+  end
+end
+
+f = ARGV.first
+
+unless f
+  puts "#{File.basename(__FILE__, '.*')}: <filename>" 
+  exit
+end
+
+book_sections(f).each do |page|
+  _, header, post = page.split(PAGE_SPLIT_RE, 3)
+  if [header, post].any? { |e| e.to_s.size.zero? }
+    p ['invalid book page', header, post]
+    next 
+  end
+  header.strip!
+  
+  time, tags = header.split(/\n/, 3)
+  p [f, time, tags]
+  _,t = time.split(/:\s/)
+  post_time = Chronic.parse(t)
+  post_time = Chronic.parse(t.gsub(/\-[A-Za-z]+\-/,' ')) if t.match(/\-[A-Za-z]+\-/)
+  doc = <<~__
+    ---
+    #{post_time}
+    #{time.strip}
+    #{tags.strip}
+    ---
+    #{post.strip}
+  __
+  p [f, t, post_time]
+  # book << doc
+  
+  # simple test if already locked
+  # break unless post && post.base64?
+  # break unless post[/\w+/].to_s.size < 24 && (post.size % 4).zero?
+
+  # if header[/safe/]
+    # p 'locking...'
+    # f_basename = File.basename(f, '.*')
+    # FileUtils.cp(f, "#{f_basename}.bak")
+    # File.write(f, pack(header, post))
+  # end
+rescue StandardError => e
+  p e
+end

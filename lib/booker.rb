@@ -19,7 +19,7 @@ FileUtils.mkdir_p BOOK_ROOT unless Dir.exist?(BOOK_ROOT)
 BOOK_DATETIME = '%Y-%m-%d %H:%M'
 BOOK_DATE = '%Y-%m-%d'
 BOOK_TIME = '%H:%M'
-ERR_MSG = 'Wo0ps! post format error. Try again :-)'
+ERR_MSG = 'Wo0ps! Aborted or Invalid Post :-)'
 NO_FILE_FLAG = '__no_file__'
 
 @tagdir = 'general'
