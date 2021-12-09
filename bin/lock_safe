@@ -10,7 +10,7 @@ PAGE_DELIMETER_RE = /(?=-{3}\ntime:)/.freeze
 
 class String
   def base64?
-    Base64.encode64(Base64.decode64(self)) == self
+    Base64.encode64(Base64.decode64(self)).strip == self.strip && (self.size % 4).positive?
   end
 end
 
@@ -42,17 +42,19 @@ book_sections(f).each do |page|
   _, header, post = page.split(PAGE_SPLIT_RE, 3)
   if [header, post].any? { |e| e.to_s.size.zero? }
     p 'invalid book page'
-    break 
+    next 
   end
   # simple test if already locked
-  break unless post && post.base64?
-  # break unless post[/\w+/].to_s.size < 24 && (post.size % 4).zero?
-
+  p post
+  p post.base64?
+  next if post.base64?
   if header[/safe/]
     p 'locking...'
     f_basename = File.basename(f, '.*')
     FileUtils.cp(f, "#{f_basename}.bak")
     File.write(f, pack(header, post))
+  else
+    p 'wtf?'
   end
 rescue StandardError => e
   p e
